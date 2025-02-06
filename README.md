@@ -1,2 +1,86 @@
-# funny-weather
+# Funny Weather
+
 A cloud-native application that combines Wellington weather data with AI-generated humor. Get the capital's forecast with a side of laughter! 🌤️ 😄
+
+## Overview
+
+Funny Weather is a microservices-based application that fetches real-time weather data for Wellington, New Zealand and generates contextual jokes based on the current conditions. It demonstrates modern cloud architecture practices using AWS services, combining serverless and containerized approaches.
+
+### Key Features
+
+- Real-time weather data integration
+- AI-powered weather-themed joke generation
+- Analytics dashboard for joke engagement metrics
+- Responsive web interface
+- RESTful API for service integration
+
+### Tech Stack
+
+- **Frontend**: React with Tailwind CSS
+- **Backend Services**:
+  - Python Lambda functions for weather data and joke generation
+  - Spring Boot service for analytics (Java)
+- **Infrastructure**: 
+  - AWS (Lambda, ECS, DynamoDB, RDS)
+  - Terraform for Infrastructure as Code
+  - GitHub Actions for CI/CD
+- **Monitoring**: AWS CloudWatch
+
+## Local Development
+
+### Prerequisites
+
+- Python 3.9+
+- Java 11+
+- Node.js 18+
+- AWS CLI configured
+- Docker
+- Terraform
+
+### Quick Start
+
+1. Clone the repository:
+```bash
+git clone https://github.com/robertoallende/funny-weather
+cd funny-weather
+```
+
+2. Set up local development environment:
+```bash
+./scripts/local-setup.sh
+```
+
+3. Configure environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+[Additional setup instructions...]
+
+## Architecture
+
+[Architecture diagram coming soon]
+
+The application follows a microservices architecture with:
+- Serverless functions for stateless operations
+- Containerized services for complex analytics
+- Event-driven design for scalability
+- Separate data stores for different service requirements
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with weather data from MetService
+- Uses OpenAI's API for joke generation
+- Inspired by New Zealand's charming weather 🌦️
+
+## Contact
+
+For questions or feedback, please open an issue or reach out to [Roberto Allende](http://linkedin.com/in/robertoallende).
+
+---
+*Note: This project was initially created as a proof of concept for demonstrating cloud-native development practices and microservices architecture.*
