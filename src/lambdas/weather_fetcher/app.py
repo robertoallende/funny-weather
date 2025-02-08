@@ -120,7 +120,6 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
         # Initialize MetOcean client
         api_key = environ.get("MET_API_KEY")
         if not api_key:
-            logger.error("MET_API_KEY environment variable is not set")
             raise ValueError("MET_API_KEY environment variable is not set. Please configure the API key in your environment variables.")
         
         client = MetOceanClient(api_key)
@@ -137,14 +136,12 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
         }
         
     except ValueError as e:
-        logger.error(f"Validation error: {str(e)}")
         return {
             "statusCode": 400,
             "body": json.dumps({"error": str(e)})
         }
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
         return {
             "statusCode": 500,
-            "body": json.dumps({"error": "Internal server error"})
+            "body": json.dumps({"error": "Internal server error", "details": str(e)})
         }

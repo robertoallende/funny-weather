@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  localstack:
+    container_name: localstack_demo
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"            # LocalStack endpoint
+      - "4510-4559:4510-4559"  # external services port range
+    environment:
+      - SERVICES=lambda,events,scheduler,iam,logs,cloudwatch
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
