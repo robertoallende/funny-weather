@@ -84,3 +84,19 @@ For questions or feedback, please open an issue or reach out to [Roberto Allende
 
 ---
 *Note: This project was initially created as a proof of concept for demonstrating cloud-native development practices and microservices architecture.*
+
+# Setup
+
+## Environment Variables
+
+Create a `terraform.tfvars` file in the `infrastructure` directory with the following variables:
+
+```hcl
+met_api_key = "your-metservice-api-key"
+```
+
+Or set the environment variable:
+
+```bash
+export TF_VAR_met_api_key="your-metservice-api-key"
+```

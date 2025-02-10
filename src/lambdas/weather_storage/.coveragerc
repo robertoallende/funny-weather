@@ -1,0 +1,20 @@
+[run]
+source = app.py
+branch = True
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError
+    except ImportError:
+    raise AssertionError
+
+ignore_errors = True
+omit =
+    tests/*
+    setup.py 

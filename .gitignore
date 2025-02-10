@@ -101,4 +101,26 @@ temp/
 .env
 .env.*
 !.env.example
-config.local.json
+config.local.jsonvolume/
+
+
+# LocalStack
+volume/
+**/volume/
+
+# Build artifacts
+infrastructure/build/
+infrastructure/files/
+
+# Terraform
+*.tfvars
+!example.tfvars
+
+# Environment variables
+.env
+.env.*
+!.env.example
+infrastructure/joke_output.json
+infrastructure/output.json
+infrastructure/weather_output.json
+output.json

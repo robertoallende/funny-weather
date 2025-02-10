@@ -84,3 +84,24 @@ Make sure to return only the JSON, no additional text."""
         return {
             "error": str(e)
         }
+
+def handler(event, context):
+    """
+    Lambda handler for joke generator
+    """
+    try:
+        # Generate content based on weather data
+        content = generate_content(event)
+        
+        return {
+            "statusCode": 200,
+            "body": json.dumps(content)
+        }
+        
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "error": str(e)
+            })
+        }
