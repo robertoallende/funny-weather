@@ -109,6 +109,22 @@ jobs:
               ":c": {"S": "COMPLETE"}
             }'
 
+      - name: Test Weather Storage
+        run: |
+          # Create test directory and copy files
+          mkdir -p test_weather_storage
+          cp -r src/lambdas/weather_storage/* test_weather_storage/
+          cd test_weather_storage
+          
+          # Install dependencies
+          pip install boto3 aws-lambda-powertools aws-xray-sdk pytest
+          
+          # Run test script
+          python scripts/test_storage_lambda.py
+        env:
+          AWS_DEFAULT_REGION: ap-southeast-2
+          DYNAMODB_TABLE: funny_weather_entries
+
   terraform:
     needs: integration-test
     runs-on: ubuntu-latest

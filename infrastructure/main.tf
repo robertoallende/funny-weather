@@ -158,3 +158,78 @@ provider "aws" {
       }
     }
   }
+
+  # Create local directory for storage Lambda build
+  resource "local_file" "storage_build_dir" {
+    content  = ""
+    filename = "${path.module}/build/weather_storage/.keep"
+
+    lifecycle {
+      create_before_destroy = true
+    }
+  }
+
+  # Install dependencies for storage Lambda
+  resource "null_resource" "storage_lambda_deps" {
+    provisioner "local-exec" {
+      command = "bash scripts/build_storage_lambda.sh"
+      working_dir = path.module
+    }
+
+    triggers = {
+      dependencies_versions = filemd5("${path.module}/../src/lambdas/weather_storage/requirements.txt")
+      source_code = filemd5("${path.module}/../src/lambdas/weather_storage/app.py")
+      timestamp = timestamp()
+    }
+
+    depends_on = [local_file.storage_build_dir]
+  }
+
+  # Package storage Lambda
+  data "archive_file" "weather_storage" {
+    type        = "zip"
+    source_dir  = "${path.module}/build/weather_storage"
+    output_path = "${path.module}/files/weather_storage.zip"
+    
+    depends_on = [null_resource.storage_lambda_deps]
+  }
+
+  # Create weather storage Lambda
+  resource "aws_lambda_function" "weather_storage" {
+    filename         = data.archive_file.weather_storage.output_path
+    source_code_hash = data.archive_file.weather_storage.output_base64sha256
+    function_name    = "weather-storage"
+    role            = aws_iam_role.lambda_role.arn
+    handler         = "app.handler"
+    runtime         = "python3.11"
+    timeout         = 30
+    memory_size     = 256
+
+    environment {
+      variables = {
+        DYNAMODB_TABLE = aws_dynamodb_table.weather_entries.name
+      }
+    }
+  }
+
+  # Add DynamoDB permissions to Lambda role
+  resource "aws_iam_role_policy" "lambda_dynamodb" {
+    name = "lambda-dynamodb-policy"
+    role = aws_iam_role.lambda_role.id
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Effect = "Allow"
+          Action = [
+            "dynamodb:PutItem",
+            "dynamodb:GetItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:Query"
+          ]
+          Resource = [aws_dynamodb_table.weather_entries.arn]
+        }
+      ]
+    })
+  }

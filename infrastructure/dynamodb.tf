@@ -1,18 +1,18 @@
-# DynamoDB table for weather and joke entries
-resource "aws_dynamodb_table" "funny_weather_entries" {
-  name           = "funny-weather-entries"
-  billing_mode   = "PAY_PER_REQUEST"  # On-demand capacity
+# DynamoDB table for weather entries
+resource "aws_dynamodb_table" "weather_entries" {
+  name           = "funny_weather_entries"
+  billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "timestamp"
   range_key      = "location"
 
   attribute {
     name = "timestamp"
-    type = "S"  # String
+    type = "S"
   }
 
   attribute {
     name = "location"
-    type = "S"  # String
+    type = "S"
   }
 
   ttl {
@@ -21,7 +21,7 @@ resource "aws_dynamodb_table" "funny_weather_entries" {
   }
 
   tags = {
-    Environment = "development"
+    Environment = "production"
     Project     = "funny-weather"
   }
 }
@@ -43,7 +43,7 @@ resource "aws_iam_policy" "dynamodb_access" {
           "dynamodb:GetItem"
         ]
         Resource = [
-          aws_dynamodb_table.funny_weather_entries.arn
+          aws_dynamodb_table.weather_entries.arn
         ]
       }
     ]

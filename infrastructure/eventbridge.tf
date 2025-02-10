@@ -80,3 +80,19 @@ resource "aws_lambda_permission" "allow_eventbridge_joke_generator" {
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.weather_fetched.arn
 }
+
+# Allow EventBridge to invoke Weather Storage Lambda
+resource "aws_lambda_permission" "allow_eventbridge_weather_storage" {
+  statement_id  = "AllowEventBridgeInvokeWeatherStorage"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.weather_storage.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.weather_fetched.arn
+}
+
+# Add Weather Storage as target for weather events
+resource "aws_cloudwatch_event_target" "weather_storage" {
+  rule      = aws_cloudwatch_event_rule.weather_fetched.name
+  target_id = "WeatherStorageTarget"
+  arn       = aws_lambda_function.weather_storage.arn
+}
