@@ -51,6 +51,12 @@ jobs:
       - name: Set up AWS CLI
         run: |
           pip install awscli-local
+          # Configure dummy AWS credentials for LocalStack
+          mkdir -p ~/.aws
+          echo "[default]
+          aws_access_key_id = test
+          aws_secret_access_key = test
+          region = ap-southeast-2" > ~/.aws/credentials
 
       - name: Create DynamoDB table
         run: |
