@@ -233,3 +233,56 @@ provider "aws" {
       ]
     })
   }
+
+  # Create local directory for joke storage Lambda build
+  resource "local_file" "joke_storage_build_dir" {
+    content  = ""
+    filename = "${path.module}/build/joke_storage/.keep"
+
+    lifecycle {
+      create_before_destroy = true
+    }
+  }
+
+  # Install dependencies for joke storage Lambda
+  resource "null_resource" "joke_storage_lambda_deps" {
+    provisioner "local-exec" {
+      command = "bash scripts/build_joke_storage_lambda.sh"
+      working_dir = path.module
+    }
+
+    triggers = {
+      dependencies_versions = filemd5("${path.module}/../src/lambdas/joke_storage/requirements.txt")
+      source_code = filemd5("${path.module}/../src/lambdas/joke_storage/app.py")
+      timestamp = timestamp()
+    }
+
+    depends_on = [local_file.joke_storage_build_dir]
+  }
+
+  # Package joke storage Lambda
+  data "archive_file" "joke_storage" {
+    type        = "zip"
+    source_dir  = "${path.module}/build/joke_storage"
+    output_path = "${path.module}/files/joke_storage.zip"
+    
+    depends_on = [null_resource.joke_storage_lambda_deps]
+  }
+
+  # Create joke storage Lambda
+  resource "aws_lambda_function" "joke_storage" {
+    filename         = data.archive_file.joke_storage.output_path
+    source_code_hash = data.archive_file.joke_storage.output_base64sha256
+    function_name    = "joke-storage"
+    role            = aws_iam_role.lambda_role.arn
+    handler         = "app.handler"
+    runtime         = "python3.11"
+    timeout         = 30
+    memory_size     = 256
+
+    environment {
+      variables = {
+        DYNAMODB_TABLE = aws_dynamodb_table.weather_entries.name
+      }
+    }
+  }

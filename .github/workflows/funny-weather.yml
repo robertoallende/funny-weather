@@ -125,6 +125,22 @@ jobs:
           AWS_DEFAULT_REGION: ap-southeast-2
           DYNAMODB_TABLE: funny_weather_entries
 
+      - name: Test Joke Storage
+        run: |
+          # Create test directory and copy files
+          mkdir -p test_joke_storage
+          cp -r src/lambdas/joke_storage/* test_joke_storage/
+          cd test_joke_storage
+          
+          # Install dependencies
+          pip install boto3 aws-lambda-powertools aws-xray-sdk pytest pytest-cov
+          
+          # Run tests with coverage
+          pytest tests/ --cov=app --cov-report=term-missing
+        env:
+          AWS_DEFAULT_REGION: ap-southeast-2
+          DYNAMODB_TABLE: funny-weather-entries
+
   terraform:
     needs: integration-test
     runs-on: ubuntu-latest

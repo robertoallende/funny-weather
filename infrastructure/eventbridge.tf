@@ -96,3 +96,30 @@ resource "aws_cloudwatch_event_target" "weather_storage" {
   target_id = "WeatherStorageTarget"
   arn       = aws_lambda_function.weather_storage.arn
 }
+
+# EventBridge Rule for Joke Events
+resource "aws_cloudwatch_event_rule" "joke_generated" {
+  name        = "joke-generated-rule"
+  description = "Capture JokeGenerated events"
+
+  event_pattern = jsonencode({
+    source      = ["custom.funnyweather"]
+    detail-type = ["JokeGenerated"]
+  })
+}
+
+# Add Joke Storage as target for joke events
+resource "aws_cloudwatch_event_target" "joke_storage" {
+  rule      = aws_cloudwatch_event_rule.joke_generated.name
+  target_id = "JokeStorageTarget"
+  arn       = aws_lambda_function.joke_storage.arn
+}
+
+# Allow EventBridge to invoke Joke Storage Lambda
+resource "aws_lambda_permission" "allow_eventbridge_joke_storage" {
+  statement_id  = "AllowEventBridgeInvokeJokeStorage"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.joke_storage.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.joke_generated.arn
+}
