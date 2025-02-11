@@ -12,6 +12,10 @@ resource "aws_scheduler_schedule" "weather_fetch_schedule" {
   target {
     arn      = aws_lambda_function.weather_fetcher.arn
     role_arn = aws_iam_role.scheduler_role.arn
+
+    input = jsonencode({
+      location = "Wellington"
+    })
   }
 }
 
@@ -62,6 +66,9 @@ resource "aws_cloudwatch_event_rule" "weather_fetched" {
   event_pattern = jsonencode({
     source      = ["custom.funnyweather"]
     detail-type = ["WeatherFetched"]
+    detail = {
+      location = ["Wellington"]  # Optional: filter for Wellington events only
+    }
   })
 }
 
@@ -70,6 +77,12 @@ resource "aws_cloudwatch_event_target" "joke_generator" {
   rule      = aws_cloudwatch_event_rule.weather_fetched.name
   target_id = "JokeGeneratorTarget"
   arn       = aws_lambda_function.joke_generator.arn
+
+  # Add retry policy
+  retry_policy {
+    maximum_event_age_in_seconds = 3600
+    maximum_retry_attempts       = 2
+  }
 }
 
 # Allow EventBridge to invoke Joke Generator Lambda

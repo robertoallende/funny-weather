@@ -1,6 +1,9 @@
 # Base requirements
 openai==1.12.0
 httpx==0.24.1
+aws-lambda-powertools>=2.30.0
+aws-xray-sdk>=2.12.0
+boto3>=1.26.0
 
 # Development requirements
 pytest==7.4.3
