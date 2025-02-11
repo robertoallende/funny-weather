@@ -7,7 +7,7 @@ services:
       - "4566:4566"            # LocalStack endpoint
       - "4510-4559:4510-4559"  # external services port range
     environment:
-      - SERVICES=lambda,events,scheduler,iam,logs,cloudwatch,dynamodb
+      - SERVICES=lambda,events,scheduler,iam,logs,cloudwatch,dynamodb,apigateway
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:

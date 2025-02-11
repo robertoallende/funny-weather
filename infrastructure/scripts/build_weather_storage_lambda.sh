@@ -5,9 +5,9 @@ echo "Starting build script..."
 echo "Current directory: $(pwd)"
 
 # Set up variables
-BUILD_DIR="build/joke_storage"
+BUILD_DIR="build/weather_storage"
 VENV_DIR="/tmp/lambda_venv_$(date +%s)_$$"  # Make venv directory unique with PID
-SRC_DIR="../src/lambdas/joke_storage"
+SRC_DIR="../src/lambdas/weather_storage"
 
 echo "Build directory: $(pwd)/${BUILD_DIR}"
 echo "Virtual environment: ${VENV_DIR}"
@@ -18,7 +18,11 @@ mkdir -p "${BUILD_DIR}"
 
 echo "Installing dependencies..."
 # Create new virtual environment
-python3 -m venv "${VENV_DIR}"
+python3 -m venv "${VENV_DIR}" || {
+    echo "Failed to create virtual environment, trying to clean up..."
+    rm -rf "${VENV_DIR}"
+    python3 -m venv "${VENV_DIR}"
+}
 source "${VENV_DIR}/bin/activate"
 
 # Install dependencies into the build directory
@@ -32,7 +36,7 @@ cp "${SRC_DIR}/app.py" "${BUILD_DIR}/"
 
 # Clean up
 deactivate
-rm -rf "${VENV_DIR}"
+rm -rf "${VENV_DIR}" || true
 
 echo "Build script completed."
 
