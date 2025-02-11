@@ -337,6 +337,30 @@ provider "aws" {
     environment {
       variables = {
         DYNAMODB_TABLE = aws_dynamodb_table.weather_entries.name
+        AWS_ENDPOINT_URL = "http://172.18.0.2:4566"  # LocalStack internal network address
+        POWERTOOLS_SERVICE_NAME = "get-funny-weather"
+        LOG_LEVEL = "DEBUG"
       }
     }
+  }
+
+  # Add CloudWatch Logs permissions
+  resource "aws_iam_role_policy" "lambda_logs" {
+    name = "lambda-logs-policy"
+    role = aws_iam_role.lambda_role.id
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Effect = "Allow"
+          Action = [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ]
+          Resource = "arn:aws:logs:*:*:*"
+        }
+      ]
+    })
   }

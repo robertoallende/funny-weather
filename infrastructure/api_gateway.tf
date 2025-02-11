@@ -59,7 +59,56 @@ resource "aws_lambda_permission" "api_gw" {
   source_arn = "${aws_api_gateway_rest_api.funny_weather.execution_arn}/*/*"
 }
 
-# Output the API URL
+# Enable CORS
+resource "aws_api_gateway_method" "weather_options" {
+  rest_api_id   = aws_api_gateway_rest_api.funny_weather.id
+  resource_id   = aws_api_gateway_resource.weather.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "weather_options" {
+  rest_api_id = aws_api_gateway_rest_api.funny_weather.id
+  resource_id = aws_api_gateway_resource.weather.id
+  http_method = aws_api_gateway_method.weather_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "weather_options_200" {
+  rest_api_id = aws_api_gateway_rest_api.funny_weather.id
+  resource_id = aws_api_gateway_resource.weather.id
+  http_method = aws_api_gateway_method.weather_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "weather_options" {
+  rest_api_id = aws_api_gateway_rest_api.funny_weather.id
+  resource_id = aws_api_gateway_resource.weather.id
+  http_method = aws_api_gateway_method.weather_options.http_method
+  status_code = aws_api_gateway_method_response.weather_options_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+# Output the API URL and ID for testing
 output "api_endpoint" {
   value = "${aws_api_gateway_stage.prod.invoke_url}/weather"
+}
+
+output "rest_api_id" {
+  value = aws_api_gateway_rest_api.funny_weather.id
 } 

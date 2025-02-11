@@ -4,45 +4,38 @@ set -e
 echo "Starting build script..."
 echo "Current directory: $(pwd)"
 
-# Create a temporary directory for building the package
-BUILD_DIR="$(pwd)/build/joke_storage"
-echo "Build directory: $BUILD_DIR"
+# Set up variables
+BUILD_DIR="build/joke_storage"
+VENV_DIR="/tmp/lambda_venv_$(date +%s)_$$"  # Make venv directory unique with PID
+SRC_DIR="../src/lambdas/joke_storage"
 
-# Clean existing files but keep directory
-rm -rf $BUILD_DIR/*
+echo "Build directory: $(pwd)/${BUILD_DIR}"
+echo "Virtual environment: ${VENV_DIR}"
+
+# Create build directory
+rm -rf "${BUILD_DIR}"
+mkdir -p "${BUILD_DIR}"
 
 echo "Installing dependencies..."
-# Create and activate a temporary virtual environment
-python -m venv /tmp/lambda_venv
-source /tmp/lambda_venv/bin/activate
+# Create new virtual environment
+python3 -m venv "${VENV_DIR}"
+source "${VENV_DIR}/bin/activate"
 
 # Install dependencies into the build directory
-pip install --platform manylinux2014_x86_64 --target $BUILD_DIR --implementation cp --python-version 3.11 --only-binary=:all: \
+pip install --platform manylinux2014_x86_64 --target "${BUILD_DIR}" --implementation cp --python-version 3.11 --only-binary=:all: \
     boto3 \
     aws-lambda-powertools \
     aws-xray-sdk
 
-# Deactivate virtual environment
+# Copy lambda function code
+cp "${SRC_DIR}/app.py" "${BUILD_DIR}/"
+
+# Clean up
 deactivate
-
-# Clean up virtual environment
-rm -rf /tmp/lambda_venv
-
-echo "Copying source files..."
-# Copy lambda source code
-cp -r ../src/lambdas/joke_storage/*.py $BUILD_DIR/
-
-echo "Cleaning up unnecessary files..."
-# Clean up unnecessary files
-find $BUILD_DIR -type d -name "__pycache__" -exec rm -rf {} +
-find $BUILD_DIR -type f -name "*.pyc" -delete
-find $BUILD_DIR -type f -name "*.pyo" -delete
-find $BUILD_DIR -type f -name "*.pyd" -delete
-find $BUILD_DIR -type d -name "tests" -exec rm -rf {} +
-find $BUILD_DIR -type d -name "testing" -exec rm -rf {} +
+rm -rf "${VENV_DIR}"
 
 echo "Build script completed."
 
 # List contents of build directory
 echo "Contents of build directory:"
-ls -la $BUILD_DIR 
+ls -la "${BUILD_DIR}" 

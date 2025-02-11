@@ -25,13 +25,27 @@ else:
 
 def get_dynamodb_client():
     """Get DynamoDB client"""
-    endpoint_url = os.environ.get('AWS_ENDPOINT_URL')  # For LocalStack testing
+    endpoint_url = os.environ.get('AWS_ENDPOINT_URL')
+    print(f"Using endpoint URL: {endpoint_url}")
+    
     client_kwargs = {
         'region_name': os.environ.get('AWS_DEFAULT_REGION', 'ap-southeast-2')
     }
-    if endpoint_url:
-        client_kwargs['endpoint_url'] = endpoint_url
     
+    # For LocalStack testing
+    if endpoint_url:
+        # Try to use internal network address if available
+        if 'LOCALSTACK_HOSTNAME' in os.environ:
+            endpoint_url = f"http://{os.environ['LOCALSTACK_HOSTNAME']}:4566"
+        
+        client_kwargs.update({
+            'endpoint_url': endpoint_url,
+            'aws_access_key_id': 'test',
+            'aws_secret_access_key': 'test',
+            'verify': False  # Disable SSL verification for LocalStack
+        })
+    
+    print(f"DynamoDB client kwargs: {client_kwargs}")
     return boto3.client('dynamodb', **client_kwargs)
 
 def deserialize_dynamodb_item(item):
@@ -59,10 +73,13 @@ def handler(event: dict, context: LambdaContext) -> dict:
     Note: Currently hardcoded for Wellington. Future enhancement needed to support multiple locations.
     """
     try:
+        print(f"Environment variables: {dict(os.environ)}")  # Debug output
+        
         # Get DynamoDB client
         dynamodb = get_dynamodb_client()
         
         # Query the latest entry for Wellington
+        print("Querying DynamoDB...")  # Debug output
         response = dynamodb.query(
             TableName=os.environ['DYNAMODB_TABLE'],
             KeyConditionExpression='#loc = :loc',
@@ -78,9 +95,11 @@ def handler(event: dict, context: LambdaContext) -> dict:
             Limit=1,
             ScanIndexForward=False  # Get newest first
         )
+        print(f"DynamoDB response: {response}")  # Debug output
         
         # Check if we got any results
         if not response['Items']:
+            print("No items found")  # Debug output
             return {
                 'statusCode': 404,
                 'body': json.dumps({
@@ -89,21 +108,23 @@ def handler(event: dict, context: LambdaContext) -> dict:
             }
         
         # Deserialize and format the response
-        item = deserialize_dynamodb_item(response['Items'][0])
+        item = response['Items'][0]
+        print(f"Found item: {item}")  # Debug output
+        
         formatted_response = {
-            'location': item['location'],
-            'timestamp': item['timestamp'],
+            'location': item['location']['S'],
+            'timestamp': item['timestamp']['S'],
             'weather': {
-                'temperature_celsius': round(item['weather_data']['temperature'] - 273.15, 1),  # Convert K to °C
-                'wind_speed': item['weather_data']['wind_speed'],
-                'cloud_cover': item['weather_data']['cloud_cover'],
-                'visibility': item['weather_data']['visibility'],
-                'humidity': item['weather_data']['humidity']
+                'temperature_celsius': round(float(item['weather_data']['M']['temperature']['N']) - 273.15, 1),
+                'wind_speed': float(item['weather_data']['M']['wind_speed']['N']),
+                'cloud_cover': float(item['weather_data']['M']['cloud_cover']['N']),
+                'visibility': float(item['weather_data']['M']['visibility']['N']),
+                'humidity': float(item['weather_data']['M']['humidity']['N'])
             },
             'joke': {
-                'emoji': item['joke_data']['emoji'],
-                'weather_status': item['joke_data']['weather_status'],
-                'jokes': item['joke_data']['jokes']
+                'emoji': item['joke_data']['M']['emoji']['S'],
+                'weather_status': item['joke_data']['M']['weather_status']['S'],
+                'jokes': [j['S'] for j in item['joke_data']['M']['jokes']['L']]
             }
         }
             
@@ -114,7 +135,7 @@ def handler(event: dict, context: LambdaContext) -> dict:
         }
         
     except ClientError as e:
-        logger.error(f"DynamoDB error: {str(e)}")
+        print(f"DynamoDB error: {str(e)}")  # Debug output
         return {
             'statusCode': 500,
             'body': json.dumps({
@@ -122,7 +143,7 @@ def handler(event: dict, context: LambdaContext) -> dict:
             })
         }
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
+        print(f"Unexpected error: {str(e)}")  # Debug output
         return {
             'statusCode': 500,
             'body': json.dumps({

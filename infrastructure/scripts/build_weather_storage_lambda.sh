@@ -5,9 +5,9 @@ echo "Starting build script..."
 echo "Current directory: $(pwd)"
 
 # Set up variables
-BUILD_DIR="build/get_funny_weather"
+BUILD_DIR="build/weather_storage"
 VENV_DIR="/tmp/lambda_venv_$(date +%s)_$$"  # Make venv directory unique with PID
-SRC_DIR="../src/lambdas/get_funny_weather"
+SRC_DIR="../src/lambdas/weather_storage"
 
 echo "Build directory: $(pwd)/${BUILD_DIR}"
 echo "Virtual environment: ${VENV_DIR}"
@@ -15,9 +15,6 @@ echo "Virtual environment: ${VENV_DIR}"
 # Create build directory
 rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
-
-# Clean up any existing virtual environment
-rm -rf "${VENV_DIR}" || true
 
 echo "Installing dependencies..."
 # Create new virtual environment
