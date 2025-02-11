@@ -6,13 +6,14 @@ provider "aws" {
     skip_requesting_account_id  = true
     skip_metadata_api_check     = true
   
-    # LocalStack endpoint
+    # LocalStack endpoints
     endpoints {
-      lambda     = "http://localhost:4566"
-      events     = "http://localhost:4566"
-      scheduler  = "http://localhost:4566"
-      iam        = "http://localhost:4566"
-      dynamodb   = "http://localhost:4566"
+      lambda      = "http://localhost:4566"
+      events      = "http://localhost:4566"
+      scheduler   = "http://localhost:4566"
+      iam         = "http://localhost:4566"
+      dynamodb    = "http://localhost:4566"
+      apigateway  = "http://localhost:4566"
     }
   }
   
@@ -274,6 +275,59 @@ provider "aws" {
     filename         = data.archive_file.joke_storage.output_path
     source_code_hash = data.archive_file.joke_storage.output_base64sha256
     function_name    = "joke-storage"
+    role            = aws_iam_role.lambda_role.arn
+    handler         = "app.handler"
+    runtime         = "python3.11"
+    timeout         = 30
+    memory_size     = 256
+
+    environment {
+      variables = {
+        DYNAMODB_TABLE = aws_dynamodb_table.weather_entries.name
+      }
+    }
+  }
+
+  # Create local directory for get funny weather Lambda build
+  resource "local_file" "get_funny_weather_build_dir" {
+    content  = ""
+    filename = "${path.module}/build/get_funny_weather/.keep"
+
+    lifecycle {
+      create_before_destroy = true
+    }
+  }
+
+  # Install dependencies for get funny weather Lambda
+  resource "null_resource" "get_funny_weather_lambda_deps" {
+    provisioner "local-exec" {
+      command = "bash scripts/build_get_funny_weather_lambda.sh"
+      working_dir = path.module
+    }
+
+    triggers = {
+      dependencies_versions = filemd5("${path.module}/../src/lambdas/get_funny_weather/requirements.txt")
+      source_code = filemd5("${path.module}/../src/lambdas/get_funny_weather/app.py")
+      timestamp = timestamp()
+    }
+
+    depends_on = [local_file.get_funny_weather_build_dir]
+  }
+
+  # Package get funny weather Lambda
+  data "archive_file" "get_funny_weather" {
+    type        = "zip"
+    source_dir  = "${path.module}/build/get_funny_weather"
+    output_path = "${path.module}/files/get_funny_weather.zip"
+    
+    depends_on = [null_resource.get_funny_weather_lambda_deps]
+  }
+
+  # Create get funny weather Lambda
+  resource "aws_lambda_function" "get_funny_weather" {
+    filename         = data.archive_file.get_funny_weather.output_path
+    source_code_hash = data.archive_file.get_funny_weather.output_base64sha256
+    function_name    = "get-funny-weather"
     role            = aws_iam_role.lambda_role.arn
     handler         = "app.handler"
     runtime         = "python3.11"
