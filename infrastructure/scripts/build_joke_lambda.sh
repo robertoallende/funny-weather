@@ -20,7 +20,9 @@ source /tmp/lambda_venv/bin/activate
 pip install --platform manylinux2014_x86_64 --target $BUILD_DIR --implementation cp --python-version 3.11 --only-binary=:all: \
     openai \
     python-dotenv \
-    aws-lambda-powertools
+    aws-lambda-powertools \
+    aws-xray-sdk \
+    boto3
 
 # Deactivate virtual environment
 deactivate

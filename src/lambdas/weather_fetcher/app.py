@@ -10,6 +10,7 @@ import requests
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from pydantic import BaseModel
+import boto3
 
 logger = Logger()
 tracer = Tracer()
@@ -96,6 +97,21 @@ def process_weather_data(raw_data: Dict[str, Any], location: str) -> WeatherResp
         timestamp=datetime.now(timezone.utc).isoformat()
     )
 
+def get_secrets():
+    """Fetch API keys from AWS Secrets Manager"""
+    session = boto3.session.Session()
+    client = session.client('secretsmanager')
+    
+    try:
+        response = client.get_secret_value(
+            SecretId='funny-weather/api-keys'
+        )
+        secrets = json.loads(response['SecretString'])
+        return secrets
+    except Exception as e:
+        logger.error(f"Error fetching secrets: {str(e)}")
+        raise
+
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
 def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
@@ -103,44 +119,73 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
     Lambda handler to fetch and process weather data
     """
     try:
+        logger.info("Starting weather fetch", extra={"event": event})
+        
         # Get location coordinates from event
         location = event.get("location", "Wellington")  # Default to Wellington
+        logger.info(f"Processing location: {location}")
         
-        # Hardcoded coordinates for now - in production would use a location lookup service
+        # Hardcoded coordinates for now
         coordinates = {
             "Wellington": (-41.276825, 174.777969),
-            # Add more NZ cities as needed
         }
         
         if location not in coordinates:
+            logger.error(f"Location not supported: {location}")
             raise ValueError(f"Location {location} not supported")
             
         lat, lon = coordinates[location]
+        logger.info(f"Using coordinates: {lat}, {lon}")
 
         # Initialize MetOcean client
-        api_key = environ.get("MET_API_KEY")
-        if not api_key:
-            raise ValueError("MET_API_KEY environment variable is not set. Please configure the API key in your environment variables.")
-        
-        client = MetOceanClient(api_key)
+        try:
+            secrets = get_secrets()
+            logger.info("Successfully retrieved secrets")
+        except Exception as e:
+            logger.error(f"Failed to get secrets: {str(e)}")
+            raise
+
+        client = MetOceanClient(secrets['met_api_key'])
         
         # Fetch weather data
-        raw_weather_data = client.get_current_weather(lat, lon)
+        try:
+            raw_weather_data = client.get_current_weather(lat, lon)
+            logger.info("Successfully fetched weather data")
+        except Exception as e:
+            logger.error(f"Failed to fetch weather data: {str(e)}")
+            raise
         
         # Process weather data
         weather_response = process_weather_data(raw_weather_data, location)
+        logger.info("Successfully processed weather data")
+        
+        # Create EventBridge client
+        events = boto3.client('events')
+        
+        # Put event for weather storage
+        try:
+            event_detail = weather_response.model_dump()
+            logger.info("Publishing event", extra={"event_detail": event_detail})
+            
+            response = events.put_events(
+                Entries=[{
+                    'Source': 'custom.funnyweather',
+                    'DetailType': 'WeatherFetched',
+                    'Detail': json.dumps(event_detail)
+                }]
+            )
+            logger.info("Successfully published event", extra={"response": response})
+        except Exception as e:
+            logger.error(f"Failed to publish event: {str(e)}")
+            raise
         
         return {
             "statusCode": 200,
             "body": json.dumps(weather_response.model_dump())
         }
         
-    except ValueError as e:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": str(e)})
-        }
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return {
             "statusCode": 500,
             "body": json.dumps({"error": "Internal server error", "details": str(e)})
