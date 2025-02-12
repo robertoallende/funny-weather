@@ -2,7 +2,7 @@
 
 A cloud-native application that combines Wellington weather data with AI-generated humor. Get the capital's forecast with a side of laughter! 🌤️ 😄
 
-<img width="660" alt="app-screenshot" src="https://github.com/user-attachments/assets/a9ec3eac-102d-4b4e-9762-e639073c747f" />
+<img width="613" alt="Screenshot 2025-02-13 at 11 21 24 AM" src="https://github.com/user-attachments/assets/0ba8c164-e736-4cb6-b6b6-ecb65448b1af" />
 
 ## Overview
 
