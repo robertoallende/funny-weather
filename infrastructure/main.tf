@@ -122,7 +122,7 @@ resource "aws_lambda_function" "weather_fetcher" {
 
   environment {
     variables = {
-      MET_API_KEY = var.met_api_key  # Use variable instead of hardcoded value
+      MET_API_KEY = var.met_api_key
     }
   }
 }
@@ -135,12 +135,12 @@ resource "aws_lambda_function" "joke_generator" {
   role            = aws_iam_role.lambda_role.arn
   handler         = "app.handler"
   runtime         = "python3.11"
-  timeout         = 60  # Increase timeout to 60 seconds
-  memory_size     = 512  # Increase memory for better performance
+  timeout         = 60
+  memory_size     = 512
 
   environment {
     variables = {
-      OPENAI_API_KEY = aws_secretsmanager_secret_version.api_keys.secret_string
+      OPENAI_API_KEY = var.openai_api_key
       POWERTOOLS_SERVICE_NAME = "joke-generator"
       LOG_LEVEL = "DEBUG"
     }
@@ -347,38 +347,6 @@ resource "aws_iam_role_policy" "lambda_logs" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
-}
-
-# Add this to your Terraform configuration
-resource "aws_secretsmanager_secret" "api_keys" {
-  name = "funny-weather/api-keys"
-}
-
-resource "aws_secretsmanager_secret_version" "api_keys" {
-  secret_id = aws_secretsmanager_secret.api_keys.id
-  secret_string = jsonencode({
-    met_api_key = var.met_api_key
-    openai_api_key = var.openai_api_key
-  })
-}
-
-# Update the Lambda role policy to allow access to secrets
-resource "aws_iam_role_policy" "lambda_secrets" {
-  name = "lambda-secrets-policy"
-  role = aws_iam_role.lambda_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = [aws_secretsmanager_secret.api_keys.arn]
       }
     ]
   })
