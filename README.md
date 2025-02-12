@@ -19,9 +19,8 @@ Funny Weather is a microservices-based application that fetches real-time weathe
 - **Frontend**: React with Tailwind CSS
 - **Backend Services**:
   - Python Lambda functions for weather data and joke generation
-  - Spring Boot service for analytics (Java)
 - **Infrastructure**: 
-  - AWS (Lambda, ECS, DynamoDB, RDS)
+  - AWS (Lambda, DynamoDB)
   - Terraform for Infrastructure as Code
   - GitHub Actions for CI/CD
 - **Monitoring**: AWS CloudWatch
@@ -31,7 +30,6 @@ Funny Weather is a microservices-based application that fetches real-time weathe
 ### Prerequisites
 
 - Python 3.9+
-- Java 11+
 - Node.js 18+
 - AWS CLI configured
 - Docker
@@ -54,6 +52,12 @@ cd funny-weather
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
+```
+
+Create a `terraform.tfvars` file in the `infrastructure` directory with the following variables:
+
+```hcl
+met_api_key = "your-metservice-api-key"
 ```
 
 [Additional setup instructions...]
@@ -104,20 +108,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For questions or feedback, please open an issue or reach out to [Roberto Allende](http://linkedin.com/in/robertoallende).
 
 ---
-*Note: This project was initially created as a proof of concept for demonstrating cloud-native development practices and microservices architecture.*
+*Note: This project was initially created as a proof of concept to experiment with cloud-native development practices and serverless architecture.*
 
-# Setup
-
-## Environment Variables
-
-Create a `terraform.tfvars` file in the `infrastructure` directory with the following variables:
-
-```hcl
-met_api_key = "your-metservice-api-key"
-```
-
-Or set the environment variable:
-
-```bash
-export TF_VAR_met_api_key="your-metservice-api-key"
-```
+Built with ❤️ in Wellington, New Zealand
