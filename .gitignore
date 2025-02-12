@@ -132,3 +132,7 @@ output.json
 terraform.tfstate
 terraform.tfstate.backup
 .terraform.lock.hcl
+
+# Next.js
+.next/
+out/
