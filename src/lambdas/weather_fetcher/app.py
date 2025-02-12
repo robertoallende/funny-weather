@@ -97,21 +97,6 @@ def process_weather_data(raw_data: Dict[str, Any], location: str) -> WeatherResp
         timestamp=datetime.now(timezone.utc).isoformat()
     )
 
-def get_secrets():
-    """Fetch API keys from AWS Secrets Manager"""
-    session = boto3.session.Session()
-    client = session.client('secretsmanager')
-    
-    try:
-        response = client.get_secret_value(
-            SecretId='funny-weather/api-keys'
-        )
-        secrets = json.loads(response['SecretString'])
-        return secrets
-    except Exception as e:
-        logger.error(f"Error fetching secrets: {str(e)}")
-        raise
-
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
 def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
@@ -137,15 +122,9 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
         lat, lon = coordinates[location]
         logger.info(f"Using coordinates: {lat}, {lon}")
 
-        # Initialize MetOcean client
-        try:
-            secrets = get_secrets()
-            logger.info("Successfully retrieved secrets")
-        except Exception as e:
-            logger.error(f"Failed to get secrets: {str(e)}")
-            raise
-
-        client = MetOceanClient(secrets['met_api_key'])
+        # Initialize MetOcean client using environment variable
+        met_api_key = os.environ['MET_API_KEY']
+        client = MetOceanClient(met_api_key)
         
         # Fetch weather data
         try:
