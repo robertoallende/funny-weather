@@ -59,14 +59,35 @@ cp .env.example .env
 [Additional setup instructions...]
 
 ## Architecture
+<img width="1805" alt="funny-weather-architecture" src="https://github.com/user-attachments/assets/d664b990-baa1-4482-8d44-8947cb41f357" />
 
-[Architecture diagram coming soon]
+The application follows a serverless architecture with:
 
-The application follows a microservices architecture with:
-- Serverless functions for stateless operations
-- Containerized services for complex analytics
-- Event-driven design for scalability
-- Separate data stores for different service requirements
+- Frontend:
+  - Next.js application hosted on S3 and served through CloudFront CDN
+  - Single-page application design for optimal user experience
+
+- Backend Services:
+  - API Gateway as the central entry point for API requests
+  - Multiple Lambda functions for specific responsibilities:
+    - Weather Fetcher: Retrieves data from MetService API
+    - Joke Generator: Integrates with OpenAI for content generation
+    - Weather/Joke Storage: Handles data persistence
+    - Get Weather API: Serves frontend requests
+
+- Event-Driven Components:
+  - EventBridge for scheduled weather fetching (1-hour intervals)
+  - Event-based joke storage triggered by joke generation
+
+- Data Storage:
+  - DynamoDB table (funny-weather-entries) for storing weather and jokes
+  - S3 for static frontend content
+
+- External Integrations:
+  - MetService API for weather data
+  - OpenAI API for joke generation
+
+This architecture prioritizes scalability, maintainability, and cost-effectiveness through serverless computing while ensuring reliable data processing and storage.
 
 ## License
 
