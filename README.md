@@ -2,6 +2,8 @@
 
 A cloud-native application that combines Wellington weather data with AI-generated humor. Get the capital's forecast with a side of laughter! 🌤️ 😄
 
+<img width="660" alt="app-screenshot" src="https://github.com/user-attachments/assets/a9ec3eac-102d-4b4e-9762-e639073c747f" />
+
 ## Overview
 
 Funny Weather is a microservices-based application that fetches real-time weather data for Wellington, New Zealand and generates contextual jokes based on the current conditions. It demonstrates modern cloud architecture practices using AWS services, combining serverless and containerized approaches.
@@ -59,8 +61,6 @@ Create a `terraform.tfvars` file in the `infrastructure` directory with the foll
 ```hcl
 met_api_key = "your-metservice-api-key"
 ```
-
-[Additional setup instructions...]
 
 ## Architecture
 <img width="1805" alt="funny-weather-architecture" src="https://github.com/user-attachments/assets/d664b990-baa1-4482-8d44-8947cb41f357" />
